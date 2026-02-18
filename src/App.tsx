@@ -36,14 +36,15 @@ const App = () => {
             <Route path="/login" element={<Login />} />
 
             <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/invoices" element={<InvoiceHistory />} />
-              <Route path="/invoices/new" element={<InvoiceGenerator />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/client-portal" element={<ClientPortal />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="products" element={<Products />} />
+              <Route path="clients" element={<Clients />} />
+              <Route path="invoices" element={<InvoiceHistory />} />
+              <Route path="invoices/new" element={<InvoiceGenerator />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="client-portal" element={<ClientPortal />} />
             </Route>
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -51,77 +51,82 @@ const Products: React.FC = () => {
   const handleDelete = (id: string) => deleteProduct.mutate(id);
 
   return (
-    <div className="p-8 animate-fade-in">
-      <div className="page-header flex items-center justify-between">
+    <div className="p-4 sm:p-8 animate-fade-in">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="page-title">Products</h1>
           <p className="page-subtitle">Manage your product catalog and inventory.</p>
         </div>
-        <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> Add Product</Button>
+        <Button size="sm" onClick={openAdd} className="w-full sm:w-auto"><Plus className="w-4 h-4 mr-1" /> Add Product</Button>
       </div>
 
       {/* Toolbar */}
-      <div className="page-toolbar">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search products…" className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Status</SelectItem>
-            {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <span className="text-sm text-muted-foreground ml-auto">{filtered.length} products</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Status</SelectItem>
+              {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">{filtered.length} products</span>
+        </div>
+        <span className="text-xs text-muted-foreground sm:hidden">{filtered.length} products</span>
       </div>
 
       {/* Table */}
       <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Stock</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
-              <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">No products found.</td></tr>
-            )}
-            {filtered.map(p => (
-              <tr key={p.id}>
-                <td className="font-medium text-foreground">{p.name}</td>
-                <td className="text-muted-foreground">{p.category}</td>
-                <td className="font-medium">${p.price.toFixed(2)}</td>
-                <td>{p.stock}</td>
-                <td><StatusBadge status={p.status} /></td>
-                <td>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-danger hover:text-danger" onClick={() => handleDelete(p.id)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="data-table min-w-[700px] lg:min-w-0">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">No products found.</td></tr>
+              )}
+              {filtered.map(p => (
+                <tr key={p.id}>
+                  <td className="font-medium text-foreground">{p.name}</td>
+                  <td className="text-muted-foreground">{p.category}</td>
+                  <td className="font-medium">${p.price.toFixed(2)}</td>
+                  <td>{p.stock}</td>
+                  <td><StatusBadge status={p.status} /></td>
+                  <td>
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-danger hover:text-danger" onClick={() => handleDelete(p.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm">
-          <div className="bg-card border border-border rounded-lg shadow-lg w-full max-w-md p-6 animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/20 backdrop-blur-sm p-4">
+          <div className="bg-card border border-border rounded-lg shadow-lg w-full max-w-md p-6 animate-in slide-in-from-bottom sm:slide-in-from-none duration-200">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-semibold">{editing ? "Edit Product" : "Add Product"}</h2>
               <button onClick={closeModal} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
@@ -158,9 +163,9 @@ const Products: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="flex gap-2 mt-6 justify-end">
-              <Button variant="outline" onClick={closeModal}>Cancel</Button>
-              <Button onClick={handleSave}>{editing ? "Save Changes" : "Add Product"}</Button>
+            <div className="flex flex-col sm:flex-row gap-2 mt-6 justify-end">
+              <Button variant="outline" onClick={closeModal} className="w-full sm:w-auto order-2 sm:order-1">Cancel</Button>
+              <Button onClick={handleSave} className="w-full sm:w-auto order-1 sm:order-2">{editing ? "Save Changes" : "Add Product"}</Button>
             </div>
           </div>
         </div>

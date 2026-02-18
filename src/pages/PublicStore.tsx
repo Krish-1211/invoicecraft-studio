@@ -32,50 +32,50 @@ const PublicStore: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center">
                         <div>
-                            <h1 className="text-xl font-bold tracking-tight leading-none">KIM Inventory</h1>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Public Catalog</p>
+                            <h1 className="text-lg sm:text-xl font-bold tracking-tight leading-none">KIM Inventory</h1>
+                            <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Public Catalog</p>
                         </div>
                     </div>
 
                     <Button variant="outline" size="sm" onClick={() => navigate("/login")}>
-                        <User className="w-4 h-4 mr-2" />
-                        Admin Login
+                        <User className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Admin Login</span>
                     </Button>
                 </div>
             </header>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full">
                 {/* Hero / Info Section */}
-                <div className="bg-card border border-border rounded-xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                <div className="bg-card border border-border rounded-xl p-5 sm:p-6 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
                     <div>
-                        <h2 className="text-2xl font-bold text-foreground">Product Catalog</h2>
-                        <p className="text-muted-foreground mt-1">
+                        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Product Catalog</h2>
+                        <p className="text-sm sm:text-base text-muted-foreground mt-1">
                             Browse our current inventory and stock levels.
                         </p>
-                        <div className="flex flex-wrap gap-4 mt-4 text-sm text-foreground/80">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mt-4 text-xs sm:text-sm text-foreground/80">
                             <div className="flex items-center gap-2">
-                                <Phone className="w-4 h-4 text-primary" />
+                                <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                                 <span>+1 (555) 123-4567</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Mail className="w-4 h-4 text-primary" />
+                                <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                                 <span>orders@kim-inventory.com</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Building className="w-4 h-4 text-primary" />
+                                <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                                 <span>123 Warehouse Dr, Example City</span>
                             </div>
                         </div>
                     </div>
-                    <div className="text-right hidden md:block">
-                        <p className="text-sm text-muted-foreground">To place an order, please contact us<br />directly with the item details.</p>
+                    <div className="text-left md:text-right">
+                        <p className="text-xs sm:text-sm text-muted-foreground">To place an order, please contact us<br className="hidden sm:block" /> directly with the item details.</p>
                     </div>
                 </div>
 
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="relative flex-1 max-w-md">
+                    <div className="relative w-full sm:flex-1 sm:max-w-md">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                             placeholder="Search products..."
@@ -85,7 +85,7 @@ const PublicStore: React.FC = () => {
                         />
                     </div>
                     <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-full sm:w-[180px]">
                             <SelectValue placeholder="Category" />
                         </SelectTrigger>
                         <SelectContent>

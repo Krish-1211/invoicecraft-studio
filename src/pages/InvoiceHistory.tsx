@@ -24,19 +24,19 @@ const InvoiceHistory: React.FC = () => {
   });
 
   return (
-    <div className="p-8 animate-fade-in">
-      <div className="page-header flex items-center justify-between">
+    <div className="p-4 sm:p-8 animate-fade-in">
+      <div className="page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="page-title">Invoices</h1>
           <p className="page-subtitle">View and manage all your invoices.</p>
         </div>
-        <Button size="sm" onClick={() => navigate("/invoices/new")}>
+        <Button size="sm" onClick={() => navigate("/invoices/new")} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-1" /> New Invoice
         </Button>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {(["All", "Paid", "Pending", "Overdue"] as const).map(s => {
           const count = s === "All"
             ? invoices.length
@@ -48,72 +48,77 @@ const InvoiceHistory: React.FC = () => {
             <button
               key={s}
               onClick={() => setFilterStatus(s)}
-              className={`stat-card text-left transition-all ${filterStatus === s ? "ring-2 ring-primary" : "hover:border-primary/40"}`}
+              className={`stat-card text-left transition-all p-3 sm:p-5 ${filterStatus === s ? "ring-2 ring-primary" : "hover:border-primary/40"}`}
             >
-              <p className="text-xs text-muted-foreground font-medium">{s === "All" ? "All Invoices" : s}</p>
-              <p className="text-lg font-semibold mt-0.5">{count}</p>
-              <p className="text-xs text-muted-foreground">${amount.toFixed(2)}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground font-medium">{s === "All" ? "All Invoices" : s}</p>
+              <p className="text-base sm:text-lg font-semibold mt-0.5">{count}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">${amount.toFixed(2)}</p>
             </button>
           );
         })}
       </div>
 
       {/* Toolbar */}
-      <div className="page-toolbar">
-        <div className="relative flex-1 max-w-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+        <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input placeholder="Search invoices…" className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-36">
-            <SlidersHorizontal className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All Status</SelectItem>
-            <SelectItem value="Paid">Paid</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
-            <SelectItem value="Overdue">Overdue</SelectItem>
-            <SelectItem value="Draft">Draft</SelectItem>
-          </SelectContent>
-        </Select>
-        <span className="text-sm text-muted-foreground ml-auto">{filtered.length} invoices</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SlidersHorizontal className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Status</SelectItem>
+              <SelectItem value="Paid">Paid</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Overdue">Overdue</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">{filtered.length} invoices</span>
+        </div>
+        <span className="text-xs text-muted-foreground sm:hidden">{filtered.length} invoices</span>
       </div>
 
       <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Invoice #</th>
-              <th>Client</th>
-              <th>Date</th>
-              <th>Due Date</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No invoices found.</td></tr>
-            )}
-            {filtered.map(inv => (
-              <tr key={inv.id}>
-                <td className="font-medium text-primary">{inv.invoiceNumber}</td>
-                <td className="text-foreground">{inv.clientName}</td>
-                <td className="text-muted-foreground">{new Date(inv.date).toLocaleDateString()}</td>
-                <td className="text-muted-foreground">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
-                <td className="font-semibold">${inv.amount.toFixed(2)}</td>
-                <td><StatusBadge status={inv.status} /></td>
-                <td>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
-                    <Download className="w-3.5 h-3.5" />
-                  </Button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="data-table min-w-[800px] lg:min-w-0">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No invoices found.</td></tr>
+              )}
+              {filtered.map(inv => (
+                <tr key={inv.id}>
+                  <td className="font-medium text-primary">{inv.invoiceNumber}</td>
+                  <td className="text-foreground">{inv.clientName}</td>
+                  <td className="text-muted-foreground">{new Date(inv.date).toLocaleDateString()}</td>
+                  <td className="text-muted-foreground">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
+                  <td className="font-semibold">${inv.amount.toFixed(2)}</td>
+                  <td><StatusBadge status={inv.status} /></td>
+                  <td className="text-right">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                      <Download className="w-3.5 h-3.5" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

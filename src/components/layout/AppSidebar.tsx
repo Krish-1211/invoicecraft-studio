@@ -19,76 +19,80 @@ const adminNav = [
   { label: "Settings", icon: Settings, to: "/settings" },
 ];
 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
 const AppSidebar: React.FC = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const { state, isMobile } = useSidebar();
+  const collapsed = state === "collapsed";
   const location = useLocation();
 
   return (
-    <aside
-      className={cn(
-        "flex flex-col h-screen sticky top-0 bg-sidebar transition-all duration-200 shrink-0",
-        collapsed ? "w-16" : "w-60"
-      )}
-    >
-      {/* Logo */}
-      <div className={cn(
-        "flex items-center gap-3 px-4 h-16 border-b border-sidebar-border",
-        collapsed && "justify-center px-0"
-      )}>
-        {!collapsed && (
-          <div>
-            <p className="text-sm font-semibold text-sidebar-foreground">KIM</p>
-            <p className="text-[10px] text-sidebar-muted">Krish Inventory Management</p>
-          </div>
-        )}
-      </div>
-
-      {/* Nav */}
-      <nav className="flex-1 py-4 px-2 space-y-0.5 overflow-y-auto">
-        {adminNav.map(({ label, icon: Icon, to }) => {
-          const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              className={cn(
-                "sidebar-item",
-                isActive && "active",
-                collapsed && "justify-center px-0"
-              )}
-              title={collapsed ? label : undefined}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {!collapsed && <span>{label}</span>}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      {/* Client Portal link */}
-      {!collapsed && (
-        <div className="px-2 pb-2">
-          <NavLink
-            to="/client-portal"
-            className={cn("sidebar-item text-xs", location.pathname.startsWith("/client-portal") && "active")}
-          >
-            <Users className="w-4 h-4 shrink-0" />
-            <span>Client Portal</span>
-          </NavLink>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="border-b border-sidebar-border h-16 flex items-center px-4">
+        <div className={cn(
+          "flex items-center gap-3",
+          collapsed && "justify-center px-0"
+        )}>
+          {!collapsed && (
+            <div>
+              <p className="text-sm font-semibold text-sidebar-foreground">KIM</p>
+              <p className="text-[10px] text-sidebar-muted">Krish Inventory Management</p>
+            </div>
+          )}
+          {collapsed && <p className="text-sm font-bold text-primary">K</p>}
         </div>
-      )}
+      </SidebarHeader>
 
-      {/* Collapse toggle */}
-      <div className="border-t border-sidebar-border p-2">
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center p-2 rounded-md text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-hover transition-colors"
-        >
-          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          {!collapsed && <span className="ml-2 text-xs">Collapse</span>}
-        </button>
-      </div>
-    </aside>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {adminNav.map(({ label, icon: Icon, to }) => {
+                const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+                return (
+                  <SidebarMenuItem key={to}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={label}
+                    >
+                      <NavLink to={to}>
+                        <Icon className="w-4 h-4" />
+                        <span>{label}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter className="p-2 border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild isActive={location.pathname.startsWith("/client-portal")}>
+              <NavLink to="/client-portal">
+                <Users className="w-4 h-4" />
+                <span>Client Portal</span>
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 

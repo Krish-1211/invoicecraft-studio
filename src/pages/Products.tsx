@@ -1,0 +1,172 @@
+import React, { useState } from "react";
+import { Plus, Search, Pencil, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import StatusBadge from "@/components/StatusBadge";
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/useData";
+import { Product, ProductStatus } from "@/data/mockData";
+
+const statusOptions: ProductStatus[] = ["in_stock", "low_stock", "out_of_stock"]; // Match backend ENUM/strings
+const categories = ["Electronics", "Office", "Stationery", "Other"];
+
+const emptyProduct: Omit<Product, "id"> = {
+  name: "", price: 0, stock: 0, status: "in_stock", category: "Electronics",
+};
+
+const Products: React.FC = () => {
+  const { data: productsData } = useProducts();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+
+  const products = productsData || [];
+
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState<Omit<Product, "id">>(emptyProduct);
+
+  const filtered = products.filter((p) => {
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus === "All" || p.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  const openAdd = () => { setEditing(null); setForm(emptyProduct); setModalOpen(true); };
+  const openEdit = (p: Product) => { setEditing(p); setForm({ name: p.name, price: typeof p.price === 'string' ? parseFloat(p.price) : p.price, stock: p.stock, status: p.status, category: p.category }); setModalOpen(true); };
+  const closeModal = () => { setModalOpen(false); setEditing(null); };
+
+  const handleSave = () => {
+    if (editing) {
+      updateProduct.mutate({ id: editing.id, ...form });
+    } else {
+      createProduct.mutate(form);
+    }
+    closeModal();
+  };
+
+  const handleDelete = (id: string) => deleteProduct.mutate(id);
+
+  return (
+    <div className="p-8 animate-fade-in">
+      <div className="page-header flex items-center justify-between">
+        <div>
+          <h1 className="page-title">Products</h1>
+          <p className="page-subtitle">Manage your product catalog and inventory.</p>
+        </div>
+        <Button size="sm" onClick={openAdd}><Plus className="w-4 h-4 mr-1" /> Add Product</Button>
+      </div>
+
+      {/* Toolbar */}
+      <div className="page-toolbar">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search products…" className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Status</SelectItem>
+            {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <span className="text-sm text-muted-foreground ml-auto">{filtered.length} products</span>
+      </div>
+
+      {/* Table */}
+      <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 && (
+              <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">No products found.</td></tr>
+            )}
+            {filtered.map(p => (
+              <tr key={p.id}>
+                <td className="font-medium text-foreground">{p.name}</td>
+                <td className="text-muted-foreground">{p.category}</td>
+                <td className="font-medium">${p.price.toFixed(2)}</td>
+                <td>{p.stock}</td>
+                <td><StatusBadge status={p.status} /></td>
+                <td>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-danger hover:text-danger" onClick={() => handleDelete(p.id)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-lg shadow-lg w-full max-w-md p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold">{editing ? "Edit Product" : "Add Product"}</h2>
+              <button onClick={closeModal} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Label>Product Name</Label>
+                <Input className="mt-1.5" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Wireless Keyboard" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Price ($)</Label>
+                  <Input className="mt-1.5" type="number" min={0} value={form.price} onChange={e => setForm(f => ({ ...f, price: parseFloat(e.target.value) || 0 }))} />
+                </div>
+                <div>
+                  <Label>Stock</Label>
+                  <Input className="mt-1.5" type="number" min={0} value={form.stock} onChange={e => setForm(f => ({ ...f, stock: parseInt(e.target.value) || 0 }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Category</Label>
+                  <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>{categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v as ProductStatus }))}>
+                    <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
+                    <SelectContent>{statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-6 justify-end">
+              <Button variant="outline" onClick={closeModal}>Cancel</Button>
+              <Button onClick={handleSave}>{editing ? "Save Changes" : "Add Product"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Products;

@@ -1,5 +1,5 @@
 services:
-  # Backend API (Node.js)
+  # Backend API
   - type: web
     name: kim-inventory-api
     runtime: node
@@ -15,7 +15,7 @@ services:
       - key: NODE_ENV
         value: production
 
-  # Frontend (Static Site - Vite)
+  # Frontend Static Site
   - type: web
     name: kim-inventory-frontend
     runtime: static
@@ -24,7 +24,4 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: kim-inventory-api
-          property: url
+        value: https://kim-inventory-api.onrender.com

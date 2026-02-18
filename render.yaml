@@ -1,24 +1,24 @@
 services:
-  # Backend Web Service
+  # Backend API (Node.js)
   - type: web
     name: kim-inventory-api
-    env: node
+    runtime: node
     plan: free
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
-        sync: false # You will paste your Supabase URL in the Render dashboard
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: NODE_ENV
         value: production
 
-  # Frontend Static Site
+  # Frontend (Static Site - Vite)
   - type: web
     name: kim-inventory-frontend
-    env: static
+    runtime: static
     plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
@@ -27,4 +27,4 @@ services:
         fromService:
           type: web
           name: kim-inventory-api
-          property: host
+          property: url

@@ -13,10 +13,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
-app.use(cors({
-    origin: 'http://localhost:8080',
-    credentials: true
-}));
+app.use(cors()); // Allow all origins in production for easier deployment
 app.use(express.json());
 
 // Routes

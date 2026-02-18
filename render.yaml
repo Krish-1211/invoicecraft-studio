@@ -24,3 +24,7 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://kim-inventory-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

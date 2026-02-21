@@ -127,26 +127,43 @@ export const generateInvoicePdf = (invoiceData: any) => {
     const taxRate = parseFloat(invoiceData.tax_rate || '0');
     const taxName = invoiceData.tax_name && invoiceData.tax_name.trim() ? invoiceData.tax_name : 'Tax';
 
-    let subtotal = totalAmount;
-    let taxAmount = 0;
+    let taxes = [];
+    if (invoiceData.taxes && Array.isArray(invoiceData.taxes) && invoiceData.taxes.length > 0) {
+        taxes = invoiceData.taxes;
+    } else if (taxRate > 0) {
+        taxes = [{ name: taxName, rate: taxRate }];
+    }
 
-    if (taxRate > 0) {
-        subtotal = totalAmount / (1 + (taxRate / 100));
-        taxAmount = totalAmount - subtotal;
+    let subtotal = totalAmount;
+    let computedTaxAmounts: { name: string, rate: number, amount: number }[] = [];
+
+    if (taxes.length > 0) {
+        // Backwards compute subtotal: total = subtotal + sum(subtotal * rate/100) -> total = subtotal * (1 + sum(rate/100))
+        const totalRatePercent = taxes.reduce((s, t) => s + parseFloat(t.rate || '0'), 0);
+        subtotal = totalAmount / (1 + (totalRatePercent / 100));
+
+        computedTaxAmounts = taxes.map(t => {
+            const rate = parseFloat(t.rate || '0');
+            return { name: t.name || 'Tax', rate, amount: subtotal * (rate / 100) };
+        });
     }
 
     doc.setFont("helvetica", "normal");
     doc.text("Subtotal:", pageWidth - 50, finalY);
     doc.text(`$${subtotal.toFixed(2)}`, pageWidth - 14, finalY, { align: "right" });
 
-    if (taxRate > 0) {
-        doc.text(`${taxName} (${taxRate}%):`, pageWidth - 50, finalY + 6);
-        doc.text(`$${taxAmount.toFixed(2)}`, pageWidth - 14, finalY + 6, { align: "right" });
+    let totalsCurrentY = finalY;
+    if (computedTaxAmounts.length > 0) {
+        computedTaxAmounts.forEach(tax => {
+            totalsCurrentY += 6;
+            doc.text(`${tax.name} (${tax.rate}%):`, pageWidth - 50, totalsCurrentY);
+            doc.text(`$${tax.amount.toFixed(2)}`, pageWidth - 14, totalsCurrentY, { align: "right" });
+        });
     }
 
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    const totalY = taxRate > 0 ? finalY + 14 : finalY + 8;
+    const totalY = totalsCurrentY + 8;
     doc.text("Total:", pageWidth - 50, totalY);
     doc.text(`$${totalAmount.toFixed(2)}`, pageWidth - 14, totalY, { align: "right" });
 

@@ -36,10 +36,10 @@ const getMyInvoices = async (req, res) => {
 // @route   POST /invoices
 // @access  Private/Admin
 const createInvoice = async (req, res) => {
-    const { invoiceNumber, clientId, items, status, dueDate, taxName, taxRate } = req.body;
+    const { invoiceNumber, clientId, items, status, dueDate, taxes } = req.body;
 
     try {
-        const invoice = await InvoiceService.createInvoice({ invoiceNumber, clientId, items, status, dueDate, taxName, taxRate });
+        const invoice = await InvoiceService.createInvoice({ invoiceNumber, clientId, items, status, dueDate, taxes });
         res.status(201).json(invoice);
     } catch (error) {
         res.status(400).json({ message: error.message });

@@ -15,12 +15,24 @@ interface LineItem {
   unitPrice: number;
 }
 
+interface TaxItem {
+  id: string;
+  name: string;
+  rate: number;
+}
+
 const emptyItem = (): LineItem => ({
   id: `row${Date.now()}`,
   productId: "",
   productName: "",
   quantity: 1,
   unitPrice: 0,
+});
+
+const emptyTax = (): TaxItem => ({
+  id: `tax${Date.now()}`,
+  name: "",
+  rate: 0,
 });
 
 const InvoiceGenerator: React.FC = () => {
@@ -37,8 +49,7 @@ const InvoiceGenerator: React.FC = () => {
   const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<LineItem[]>([emptyItem()]);
   const [notes, setNotes] = useState("");
-  const [taxName, setTaxName] = useState("Service Tax");
-  const [taxRate, setTaxRate] = useState<number>(0);
+  const [taxes, setTaxes] = useState<TaxItem[]>([]);
 
   const updateItem = (id: string, field: keyof LineItem, value: string | number) => {
     setItems(prev => prev.map(item => {
@@ -54,6 +65,12 @@ const InvoiceGenerator: React.FC = () => {
   const addItem = () => setItems(prev => [...prev, emptyItem()]);
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
+  const addTax = () => setTaxes(prev => [...prev, emptyTax()]);
+  const removeTax = (id: string) => setTaxes(prev => prev.filter(t => t.id !== id));
+  const updateTax = (id: string, field: keyof TaxItem, value: string | number) => {
+    setTaxes(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
+  };
+
   const handleCreate = (status: "draft" | "pending") => {
     if (!selectedClient) return alert("Please select a client");
     if (items.some(i => !i.productId)) return alert("Please select products for all items");
@@ -63,8 +80,7 @@ const InvoiceGenerator: React.FC = () => {
       invoiceNumber: `INV-${Date.now()}`, // Simple generation
       dueDate: dueDate || null, // Optional
       status,
-      taxName,
-      taxRate,
+      taxes: taxes.map(t => ({ name: t.name, rate: t.rate })),
       items: items.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.unitPrice }))
     }, {
       onSuccess: () => navigate("/invoices")
@@ -72,8 +88,8 @@ const InvoiceGenerator: React.FC = () => {
   };
 
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
-  const tax = subtotal * (taxRate / 100);
-  const total = subtotal + tax;
+  const totalTaxAmount = taxes.reduce((sum, t) => sum + subtotal * (t.rate / 100), 0);
+  const total = subtotal + totalTaxAmount;
 
   return (
     <div className="p-4 sm:p-8 animate-fade-in max-w-5xl">
@@ -184,31 +200,46 @@ const InvoiceGenerator: React.FC = () => {
           {/* Totals */}
           <div className="border-t border-border px-4 sm:px-6 py-4">
             <div className="ml-auto max-w-xs space-y-2 text-sm">
-              <div className="flex justify-between text-muted-foreground">
+              <div className="flex justify-between text-muted-foreground pb-2">
                 <span>Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center text-muted-foreground gap-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={taxName}
-                    onChange={e => setTaxName(e.target.value)}
-                    placeholder="Tax Name"
-                    className="h-7 w-24 text-xs"
-                  />
-                  <div className="flex items-center gap-1">
+
+              {taxes.map(tax => (
+                <div key={tax.id} className="flex justify-between items-center text-muted-foreground gap-2 py-1">
+                  <div className="flex items-center gap-2">
                     <Input
-                      type="number" min={0}
-                      value={taxRate}
-                      onChange={e => setTaxRate(parseFloat(e.target.value) || 0)}
-                      className="h-7 w-16 text-xs px-2"
+                      value={tax.name}
+                      onChange={e => updateTax(tax.id, "name", e.target.value)}
+                      placeholder="Tax Name"
+                      className="h-7 w-24 text-xs"
                     />
-                    <span className="text-xs">%</span>
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number" min={0}
+                        value={tax.rate}
+                        onChange={e => updateTax(tax.id, "rate", parseFloat(e.target.value) || 0)}
+                        className="h-7 w-16 text-xs px-2"
+                      />
+                      <span className="text-xs">%</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-row items-center gap-2">
+                    <span>${(subtotal * (tax.rate / 100)).toFixed(2)}</span>
+                    <button onClick={() => removeTax(tax.id)} className="text-muted-foreground hover:text-danger ml-2">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
-                <span>${tax.toFixed(2)}</span>
+              ))}
+
+              <div className="pt-2">
+                <Button variant="ghost" size="sm" onClick={addTax} className="h-7 text-xs px-2 -ml-2 text-muted-foreground hover:text-primary">
+                  <Plus className="w-3 h-3 mr-1" /> Add Tax
+                </Button>
               </div>
-              <div className="flex justify-between font-semibold text-foreground border-t border-border pt-2">
+
+              <div className="flex justify-between font-semibold text-foreground border-t border-border mt-2 pt-2">
                 <span>Total</span>
                 <span className="text-primary">${total.toFixed(2)}</span>
               </div>

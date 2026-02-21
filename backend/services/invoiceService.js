@@ -84,7 +84,7 @@ class InvoiceService {
         }
     }
 
-    static async createInvoice({ clientId, items, invoiceNumber, status, dueDate, taxName, taxRate }) {
+    static async createInvoice({ clientId, items, invoiceNumber, status, dueDate, taxes }) {
         const client = await pool.connect();
 
         try {
@@ -101,16 +101,22 @@ class InvoiceService {
                 };
             });
 
-            const parsedTaxRate = parseFloat(taxRate) || 0;
-            const taxAmount = subtotal * (parsedTaxRate / 100);
-            const total_amount = subtotal + taxAmount;
+            const validTaxes = Array.isArray(taxes) ? taxes : [];
+            let totalTaxAmount = 0;
+            validTaxes.forEach(t => {
+                const r = parseFloat(t.rate) || 0;
+                totalTaxAmount += subtotal * (r / 100);
+            });
+            const total_amount = subtotal + totalTaxAmount;
+
+            const taxesJson = JSON.stringify(validTaxes.map(t => ({ name: t.name || 'Tax', rate: parseFloat(t.rate) || 0 })));
 
             const query = `
-                INSERT INTO invoices (invoice_number, client_id, total_amount, status, due_date, tax_name, tax_rate)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO invoices (invoice_number, client_id, total_amount, status, due_date, taxes)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING *
             `;
-            const values = [invoiceNumber, clientId, total_amount, status || 'pending', dueDate || null, taxName || null, parsedTaxRate];
+            const values = [invoiceNumber, clientId, total_amount, status || 'pending', dueDate || null, taxesJson];
 
             const invoiceResult = await client.query(query, values);
             const invoice = invoiceResult.rows[0];

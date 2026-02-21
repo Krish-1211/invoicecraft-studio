@@ -2,7 +2,9 @@ import React from "react";
 import { Download, FileText, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/StatusBadge";
-import { useUser, useMyInvoices } from "@/hooks/useData";
+import { useUser, useMyInvoices, fetchInvoiceById } from "@/hooks/useData";
+import { generateInvoicePdf } from "@/lib/pdfUtils";
+import { toast } from "sonner";
 
 const ClientPortal: React.FC = () => {
   const { data: user } = useUser();
@@ -12,6 +14,21 @@ const ClientPortal: React.FC = () => {
 
   const totalPaid = clientInvoices.filter((i: any) => i.status.toLowerCase() === "paid").reduce((s: number, i: any) => s + i.amount, 0);
   const totalPending = clientInvoices.filter((i: any) => i.status.toLowerCase() === "pending").reduce((s: number, i: any) => s + i.amount, 0);
+
+  const handleDownload = async (invoiceId: string) => {
+    try {
+      const fullInvoice = await fetchInvoiceById(invoiceId);
+      if (!fullInvoice) {
+        toast.error("Invoice not found.");
+        return;
+      }
+      generateInvoicePdf(fullInvoice);
+      toast.success("Invoice PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to download invoice:", error);
+      toast.error("Failed to download invoice. Please try again.");
+    }
+  };
 
   // If loading or no client data (e.g. admin viewing), show placeholder or loading
   if (isLoading) return <div className="p-8 text-center">Loading...</div>;
@@ -100,7 +117,12 @@ const ClientPortal: React.FC = () => {
                     <td className="font-semibold">${inv.amount.toFixed(2)}</td>
                     <td><StatusBadge status={inv.status} /></td>
                     <td>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => handleDownload(inv.id)}
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </td>

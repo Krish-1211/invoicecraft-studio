@@ -143,5 +143,7 @@ export const generateInvoicePdf = (invoiceData: any) => {
     doc.text("Thank you for your business!", pageWidth / 2, doc.internal.pageSize.getHeight() - 20, { align: "center" });
 
     // Automatically trigger the download
-    doc.save(`${invoiceData.invoice_number || invoiceData.invoiceNumber || 'Invoice'}.pdf`);
+    const rawName = String(invoiceData.invoice_number || invoiceData.invoiceNumber || invoiceData.id || 'Invoice').trim();
+    const safeName = rawName.includes('Invoice') ? rawName : `Invoice-${rawName}`;
+    doc.save(`${safeName}.pdf`);
 };

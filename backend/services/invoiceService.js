@@ -47,6 +47,8 @@ class InvoiceService {
                 const pRes = await client.query('SELECT price FROM products WHERE id = $1', [processedItems[i].productId]);
                 if (pRes.rows.length > 0) {
                     processedItems[i].price = parseFloat(pRes.rows[0].price);
+                } else {
+                    processedItems[i].price = 0;
                 }
                 const itemTotal = (processedItems[i].price || 0) * processedItems[i].quantity;
                 total_amount += itemTotal;

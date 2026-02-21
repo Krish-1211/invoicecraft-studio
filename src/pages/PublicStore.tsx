@@ -283,9 +283,8 @@ const PublicStore: React.FC = () => {
                                                 size="sm"
                                                 className="h-8 shadow-sm transition-all"
                                                 onClick={() => addToCart(product)}
-                                                disabled={product.stock === 0}
                                             >
-                                                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                                                Add to Cart
                                             </Button>
                                         </div>
                                     </div>

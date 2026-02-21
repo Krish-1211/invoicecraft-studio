@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useProducts, useCreatePublicOrder } from "@/hooks/useData";
 import { useNavigate } from "react-router-dom";
-import StatusBadge from "@/components/StatusBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -260,10 +259,6 @@ const PublicStore: React.FC = () => {
                                         alt={product.name}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     />
-                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
-                                    <div className="absolute top-3 right-3">
-                                        <StatusBadge status={product.status} />
-                                    </div>
                                 </div>
                                 <CardHeader className="p-4 pb-2">
                                     <div className="flex justify-between items-start gap-2">

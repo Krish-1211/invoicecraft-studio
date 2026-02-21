@@ -121,20 +121,34 @@ export const generateInvoicePdf = (invoiceData: any) => {
 
     // -- TOTALS SECTION --
     // @ts-ignore
-    const finalY = doc.lastAutoTable.finalY + 10;
+    const finalY = Math.max(doc.lastAutoTable.finalY || 0, 100) + 10;
     const totalAmount = parseFloat(invoiceData.total_amount || invoiceData.amount || '0');
 
-    // Subtotal (Assume no tax in the object for now, or match it entirely as total)
-    const subtotal = totalAmount;
+    const taxRate = parseFloat(invoiceData.tax_rate || '0');
+    const taxName = invoiceData.tax_name && invoiceData.tax_name.trim() ? invoiceData.tax_name : 'Tax';
+
+    let subtotal = totalAmount;
+    let taxAmount = 0;
+
+    if (taxRate > 0) {
+        subtotal = totalAmount / (1 + (taxRate / 100));
+        taxAmount = totalAmount - subtotal;
+    }
 
     doc.setFont("helvetica", "normal");
     doc.text("Subtotal:", pageWidth - 50, finalY);
     doc.text(`$${subtotal.toFixed(2)}`, pageWidth - 14, finalY, { align: "right" });
 
+    if (taxRate > 0) {
+        doc.text(`${taxName} (${taxRate}%):`, pageWidth - 50, finalY + 6);
+        doc.text(`$${taxAmount.toFixed(2)}`, pageWidth - 14, finalY + 6, { align: "right" });
+    }
+
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text("Total:", pageWidth - 50, finalY + 8);
-    doc.text(`$${totalAmount.toFixed(2)}`, pageWidth - 14, finalY + 8, { align: "right" });
+    const totalY = taxRate > 0 ? finalY + 14 : finalY + 8;
+    doc.text("Total:", pageWidth - 50, totalY);
+    doc.text(`$${totalAmount.toFixed(2)}`, pageWidth - 14, totalY, { align: "right" });
 
     // -- FOOTER --
     doc.setTextColor(148, 163, 184); // slate-400

@@ -84,16 +84,16 @@ class InvoiceService {
         }
     }
 
-    static async createInvoice({ clientId, items, invoiceNumber, status, dueDate }) {
+    static async createInvoice({ clientId, items, invoiceNumber, status, dueDate, taxName, taxRate }) {
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
 
-            let total_amount = 0;
+            let subtotal = 0;
             const processedItems = items.map(item => {
                 const itemTotal = (item.price || 0) * item.quantity;
-                total_amount += itemTotal;
+                subtotal += itemTotal;
                 return {
                     productId: item.productId,
                     quantity: item.quantity,
@@ -101,12 +101,16 @@ class InvoiceService {
                 };
             });
 
+            const parsedTaxRate = parseFloat(taxRate) || 0;
+            const taxAmount = subtotal * (parsedTaxRate / 100);
+            const total_amount = subtotal + taxAmount;
+
             const query = `
-                INSERT INTO invoices (invoice_number, client_id, total_amount, status, due_date)
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO invoices (invoice_number, client_id, total_amount, status, due_date, tax_name, tax_rate)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING *
             `;
-            const values = [invoiceNumber, clientId, total_amount, status || 'pending', dueDate || null];
+            const values = [invoiceNumber, clientId, total_amount, status || 'pending', dueDate || null, taxName || null, parsedTaxRate];
 
             const invoiceResult = await client.query(query, values);
             const invoice = invoiceResult.rows[0];

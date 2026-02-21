@@ -37,6 +37,8 @@ const InvoiceGenerator: React.FC = () => {
   const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<LineItem[]>([emptyItem()]);
   const [notes, setNotes] = useState("");
+  const [taxName, setTaxName] = useState("Service Tax");
+  const [taxRate, setTaxRate] = useState<number>(0);
 
   const updateItem = (id: string, field: keyof LineItem, value: string | number) => {
     setItems(prev => prev.map(item => {
@@ -61,6 +63,8 @@ const InvoiceGenerator: React.FC = () => {
       invoiceNumber: `INV-${Date.now()}`, // Simple generation
       dueDate: dueDate || null, // Optional
       status,
+      taxName,
+      taxRate,
       items: items.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.unitPrice }))
     }, {
       onSuccess: () => navigate("/invoices")
@@ -68,7 +72,7 @@ const InvoiceGenerator: React.FC = () => {
   };
 
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
-  const tax = subtotal * 0.1;
+  const tax = subtotal * (taxRate / 100);
   const total = subtotal + tax;
 
   return (
@@ -184,8 +188,24 @@ const InvoiceGenerator: React.FC = () => {
                 <span>Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Tax (10%)</span>
+              <div className="flex justify-between items-center text-muted-foreground gap-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={taxName}
+                    onChange={e => setTaxName(e.target.value)}
+                    placeholder="Tax Name"
+                    className="h-7 w-24 text-xs"
+                  />
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number" min={0}
+                      value={taxRate}
+                      onChange={e => setTaxRate(parseFloat(e.target.value) || 0)}
+                      className="h-7 w-16 text-xs px-2"
+                    />
+                    <span className="text-xs">%</span>
+                  </div>
+                </div>
                 <span>${tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-semibold text-foreground border-t border-border pt-2">

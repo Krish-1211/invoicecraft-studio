@@ -11,6 +11,7 @@ import Products from "./pages/Products";
 import Clients from "./pages/Clients";
 import InvoiceGenerator from "./pages/InvoiceGenerator";
 import InvoiceHistory from "./pages/InvoiceHistory";
+import Orders from "./pages/Orders";
 import SettingsPage from "./pages/SettingsPage";
 import ClientPortal from "./pages/ClientPortal";
 import NotFound from "./pages/NotFound";
@@ -35,6 +36,7 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/products" element={<Products />} />
               <Route path="/clients" element={<Clients />} />
+              <Route path="/orders" element={<Orders />} />
               <Route path="/invoices" element={<InvoiceHistory />} />
               <Route path="/invoices/new" element={<InvoiceGenerator />} />
               <Route path="/settings" element={<SettingsPage />} />

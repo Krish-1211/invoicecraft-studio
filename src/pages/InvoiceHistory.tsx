@@ -12,7 +12,7 @@ import { generateInvoicePdf } from "@/lib/pdfUtils";
 const InvoiceHistory: React.FC = () => {
   const navigate = useNavigate();
   const { data: invoicesData } = useInvoices();
-  const invoices = invoicesData || [];
+  const invoices = (invoicesData || []).filter((inv: any) => !inv.invoiceNumber?.startsWith('ORD-'));
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");

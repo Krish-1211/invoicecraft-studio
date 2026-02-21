@@ -8,12 +8,13 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 const adminNav = [
   { label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" },
   { label: "Products", icon: Package, to: "/products" },
+  { label: "Orders", icon: ShoppingCart, to: "/orders" },
   { label: "Clients", icon: Users, to: "/clients" },
   { label: "Invoices", icon: FileText, to: "/invoices" },
   { label: "Settings", icon: Settings, to: "/settings" },

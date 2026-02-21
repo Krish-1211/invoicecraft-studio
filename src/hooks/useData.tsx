@@ -191,3 +191,9 @@ export const useUser = () => {
         retry: false,
     });
 };
+
+export const useCreatePublicOrder = () => {
+    return useMutation({
+        mutationFn: (orderData: { customer: any, items: any[] }) => api.post('/invoices/public', orderData),
+    });
+};

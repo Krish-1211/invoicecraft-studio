@@ -142,6 +142,11 @@ export const useCreateInvoice = () => {
     });
 };
 
+export const fetchInvoiceById = async (id: string) => {
+    const response = await api.get(`/invoices/${id}`);
+    return response.data;
+};
+
 export const useMyInvoices = () => {
     const query = useQuery({
         queryKey: ['myInvoices'],

@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import StatusBadge from "@/components/StatusBadge";
-import { useInvoices } from "@/hooks/useData";
+import { toast } from "sonner";
+import { useInvoices, fetchInvoiceById } from "@/hooks/useData";
+import { generateInvoicePdf } from "@/lib/pdfUtils";
 
 const InvoiceHistory: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +24,21 @@ const InvoiceHistory: React.FC = () => {
     const matchStatus = filterStatus === "All" || inv.status.toLowerCase() === filterStatus.toLowerCase();
     return matchSearch && matchStatus;
   });
+
+  const handleDownload = async (invoideId: string) => {
+    try {
+      const fullInvoice = await fetchInvoiceById(invoideId);
+      if (!fullInvoice) {
+        toast.error("Invoice not found.");
+        return;
+      }
+      generateInvoicePdf(fullInvoice);
+      toast.success("Invoice PDF downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to download invoice:", error);
+      toast.error("Failed to download invoice. Please try again.");
+    }
+  };
 
   return (
     <div className="p-4 sm:p-8 animate-fade-in">
@@ -110,7 +127,12 @@ const InvoiceHistory: React.FC = () => {
                   <td className="font-semibold">${inv.amount.toFixed(2)}</td>
                   <td><StatusBadge status={inv.status} /></td>
                   <td className="text-right">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      onClick={() => handleDownload(inv.id)}
+                    >
                       <Download className="w-3.5 h-3.5" />
                     </Button>
                   </td>

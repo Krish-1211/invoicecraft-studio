@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import StatusBadge from "@/components/StatusBadge";
 import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/useData";
 import { Product, ProductStatus } from "@/data/mockData";
+import { getProductImage } from "@/lib/utils";
 
 const statusOptions: ProductStatus[] = ["in_stock", "low_stock", "out_of_stock"]; // Match backend ENUM/strings
 const categories = ["Electronics", "Office", "Stationery", "Other"];
@@ -101,7 +102,12 @@ const Products: React.FC = () => {
               )}
               {filtered.map(p => (
                 <tr key={p.id}>
-                  <td className="font-medium text-foreground">{p.name}</td>
+                  <td className="font-medium text-foreground">
+                    <div className="flex items-center gap-3">
+                      <img src={getProductImage(p)} alt={p.name} className="w-10 h-10 rounded-md object-cover border border-border" />
+                      <span>{p.name}</span>
+                    </div>
+                  </td>
                   <td className="text-muted-foreground">{p.category}</td>
                   <td className="font-medium">${p.price.toFixed(2)}</td>
                   <td>{p.stock}</td>

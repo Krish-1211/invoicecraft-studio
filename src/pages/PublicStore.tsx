@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import StatusBadge from "@/components/StatusBadge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { getProductImage } from "@/lib/utils";
 
 const PublicStore: React.FC = () => {
     const navigate = useNavigate();
@@ -110,8 +111,13 @@ const PublicStore: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredProducts.map((product: any) => (
                             <Card key={product.id} className="overflow-hidden hover:shadow-md transition-shadow group">
-                                <div className="aspect-[4/3] bg-muted/50 flex items-center justify-center relative border-b border-border">
-                                    <Package className="w-16 h-16 text-muted-foreground/20 group-hover:scale-110 transition-transform duration-300" />
+                                <div className="aspect-[4/3] bg-muted/50 flex items-center justify-center relative border-b border-border overflow-hidden group">
+                                    <img
+                                        src={getProductImage(product)}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    />
+                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
                                     <div className="absolute top-3 right-3">
                                         <StatusBadge status={product.status} />
                                     </div>

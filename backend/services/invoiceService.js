@@ -73,6 +73,11 @@ class InvoiceService {
                     'INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
                     [invoice.id, item.productId, item.quantity, item.price]
                 );
+                // Deduct stock
+                await client.query(
+                    'UPDATE products SET stock = stock - $1 WHERE id = $2',
+                    [item.quantity, item.productId]
+                );
             }
 
             await client.query('COMMIT');
@@ -128,6 +133,13 @@ class InvoiceService {
                     'INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
                     [invoice.id, item.productId, item.quantity, item.price]
                 );
+                // Deduct stock for non-draft invoices
+                if (status !== 'draft') {
+                    await client.query(
+                        'UPDATE products SET stock = stock - $1 WHERE id = $2',
+                        [item.quantity, item.productId]
+                    );
+                }
             }
 
             await client.query('COMMIT');

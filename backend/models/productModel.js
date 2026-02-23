@@ -58,6 +58,8 @@ class ProductModel {
             const coPurchaseResult = await pool.query(coPurchaseQuery, [productId, limit]);
             let recommendations = coPurchaseResult.rows;
 
+            const getExcludedIds = (recs) => [productId, ...recs.map(r => r.id)];
+
             // NEW: Keyword-based Cross-sell Logic (e.g. Keyboard -> Mouse)
             if (recommendations.length < limit) {
                 const product = await this.findById(productId);
@@ -72,13 +74,13 @@ class ProductModel {
 
                     if (searchKeyword) {
                         const remainingLimit = limit - recommendations.length;
-                        const excludedIds = [productId, ...recommendations.map(r => r.id)];
+                        const excludedIds = getExcludedIds(recommendations);
 
                         // For cross-sells, we are more lenient with status to ensure a match
                         const keywordQuery = `
                             SELECT * FROM products 
                             WHERE name ILIKE $1 
-                              AND id != ALL($2::text[])
+                              AND id != ALL($2::uuid[])
                               AND status NOT ILIKE 'deleted'
                             ORDER BY (CASE WHEN status ILIKE 'out_of_stock' THEN 1 ELSE 0 END) ASC, created_at DESC
                             LIMIT $3
@@ -92,36 +94,33 @@ class ProductModel {
             // Fallback 1: Same Category
             if (recommendations.length < limit) {
                 const product = recommendations.length > 0 ? null : await this.findById(productId);
-                const category = product?.category;
+                const category = product?.category || (await this.findById(productId))?.category;
 
-                if (category || (recommendations.length === 0 && product?.category)) {
-                    const targetCategory = category || (await this.findById(productId))?.category;
-                    if (targetCategory) {
-                        const remainingLimit = limit - recommendations.length;
-                        const excludedIds = [productId, ...recommendations.map(r => r.id)];
+                if (category) {
+                    const remainingLimit = limit - recommendations.length;
+                    const excludedIds = getExcludedIds(recommendations);
 
-                        const categoryQuery = `
-                            SELECT * FROM products 
-                            WHERE category = $1 
-                              AND id != ALL($2::text[])
-                              AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock' OR status ILIKE 'low_stock')
-                            ORDER BY created_at DESC
-                            LIMIT $3
-                        `;
-                        const categoryResult = await pool.query(categoryQuery, [targetCategory, excludedIds, remainingLimit]);
-                        recommendations = [...recommendations, ...categoryResult.rows];
-                    }
+                    const categoryQuery = `
+                        SELECT * FROM products 
+                        WHERE category = $1 
+                          AND id != ALL($2::uuid[])
+                          AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock' OR status ILIKE 'low_stock')
+                        ORDER BY created_at DESC
+                        LIMIT $3
+                    `;
+                    const categoryResult = await pool.query(categoryQuery, [category, excludedIds, remainingLimit]);
+                    recommendations = [...recommendations, ...categoryResult.rows];
                 }
             }
 
             // Final Fallback: If still not enough, fill with latest products
             if (recommendations.length < limit) {
                 const remainingLimit = limit - recommendations.length;
-                const excludedIds = [productId, ...recommendations.map(r => r.id)];
+                const excludedIds = getExcludedIds(recommendations);
                 const generalQuery = `
                     SELECT * FROM products 
-                    WHERE id != ALL($1::text[])
-                      AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock')
+                    WHERE id != ALL($1::uuid[])
+                      AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock' OR status ILIKE 'low_stock')
                     ORDER BY created_at DESC
                     LIMIT $2
                  `;
@@ -131,8 +130,8 @@ class ProductModel {
 
             return recommendations;
         } catch (error) {
-            console.error('Error in getRecommendations:', error);
-            return [];
+            console.error('Error in getRecommendations model:', error);
+            throw error; // Rethrow so the controller can handle it
         }
     }
 }

@@ -119,22 +119,28 @@ const InvoiceHistory: React.FC = () => {
                 <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No invoices found.</td></tr>
               )}
               {filtered.map(inv => (
-                <tr key={inv.id}>
-                  <td className="font-medium text-primary">{inv.invoiceNumber}</td>
+                <tr
+                  key={inv.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                  onClick={() => navigate(`/invoices/${inv.id}`)}
+                >
+                  <td className="font-medium text-primary group-hover:underline">{inv.invoiceNumber}</td>
                   <td className="text-foreground">{inv.clientName}</td>
                   <td className="text-muted-foreground">{new Date(inv.date).toLocaleDateString()}</td>
                   <td className="text-muted-foreground">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                   <td className="font-semibold">${inv.amount.toFixed(2)}</td>
                   <td><StatusBadge status={inv.status} /></td>
                   <td className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
-                      onClick={() => handleDownload(inv.id)}
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => handleDownload(inv.id)}
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

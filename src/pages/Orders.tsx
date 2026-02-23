@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Download, SlidersHorizontal, PackageOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { useInvoices, fetchInvoiceById } from "@/hooks/useData";
 import { generateInvoicePdf } from "@/lib/pdfUtils";
 
 const Orders: React.FC = () => {
+    const navigate = useNavigate();
     const { data: invoicesData } = useInvoices();
     // Orders are identified by the 'ORD-' prefix
     const orders = (invoicesData || []).filter((inv: any) => inv.invoiceNumber?.startsWith('ORD-'));
@@ -104,22 +106,28 @@ const Orders: React.FC = () => {
                                 </tr>
                             )}
                             {filtered.map(order => (
-                                <tr key={order.id}>
-                                    <td className="font-medium text-primary">{order.invoiceNumber}</td>
+                                <tr
+                                    key={order.id}
+                                    className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                                    onClick={() => navigate(`/invoices/${order.id}`)}
+                                >
+                                    <td className="font-medium text-primary group-hover:underline">{order.invoiceNumber}</td>
                                     <td className="text-foreground">{order.clientName}</td>
                                     <td className="text-muted-foreground">{new Date(order.date).toLocaleDateString()}</td>
                                     <td className="text-muted-foreground">{order.dueDate ? new Date(order.dueDate).toLocaleDateString() : '-'}</td>
                                     <td className="font-semibold">${order.amount.toFixed(2)}</td>
                                     <td><StatusBadge status={order.status} /></td>
                                     <td className="text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-muted-foreground hover:text-primary"
-                                            onClick={() => handleDownload(order.id)}
-                                        >
-                                            <Download className="w-3.5 h-3.5" />
-                                        </Button>
+                                        <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                                onClick={() => handleDownload(order.id)}
+                                            >
+                                                <Download className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

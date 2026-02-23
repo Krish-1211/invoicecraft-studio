@@ -157,9 +157,32 @@ export const useCreateInvoice = () => {
     });
 };
 
+export const useDeleteInvoice = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => api.delete(`/invoices/${id}`),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+            queryClient.invalidateQueries({ queryKey: ['clients'] });
+        }
+    });
+};
+
 export const fetchInvoiceById = async (id: string) => {
     const response = await api.get(`/invoices/${id}`);
     return response.data;
+};
+
+export const useInvoice = (id: string | null) => {
+    return useQuery({
+        queryKey: ['invoice', id],
+        queryFn: async () => {
+            if (!id) return null;
+            return fetchInvoiceById(id);
+        },
+        enabled: !!id,
+    });
 };
 
 export const useMyInvoices = () => {

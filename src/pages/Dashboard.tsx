@@ -108,8 +108,12 @@ const Dashboard: React.FC = () => {
               </thead>
               <tbody>
                 {recentInvoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className="font-medium text-foreground">{inv.invoiceNumber}</td>
+                  <tr
+                    key={inv.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                    onClick={() => navigate(`/invoices/${inv.id}`)}
+                  >
+                    <td className="font-medium text-primary group-hover:underline">{inv.invoiceNumber}</td>
                     <td className="text-muted-foreground">{inv.clientName}</td>
                     <td className="font-medium">${inv.amount.toFixed(2)}</td>
                     <td><StatusBadge status={inv.status} /></td>

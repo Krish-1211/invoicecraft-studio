@@ -48,7 +48,7 @@ class ProductModel {
             JOIN products p ON ii2.product_id = p.id
             WHERE ii1.product_id = $1 
               AND ii2.product_id <> $1
-              AND p.status = 'active'
+              AND (p.status ILIKE 'active' OR p.status ILIKE 'In Stock' OR p.status ILIKE 'in_stock')
             GROUP BY p.id, p.name, p.price, p.category, p.stock, p.status
             ORDER BY frequency DESC
             LIMIT $2
@@ -68,8 +68,8 @@ class ProductModel {
                     const categoryQuery = `
                         SELECT * FROM products 
                         WHERE category = $1 
-                          AND id != ALL($2::uuid[])
-                          AND status = 'active'
+                          AND id != ALL($2::text[])
+                          AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock')
                         ORDER BY created_at DESC
                         LIMIT $3
                     `;
@@ -84,8 +84,8 @@ class ProductModel {
                 const excludedIds = [productId, ...recommendations.map(r => r.id)];
                 const generalQuery = `
                     SELECT * FROM products 
-                    WHERE id != ALL($1::uuid[])
-                      AND status = 'active'
+                    WHERE id != ALL($1::text[])
+                      AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock')
                     ORDER BY created_at DESC
                     LIMIT $2
                  `;

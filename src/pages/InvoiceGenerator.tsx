@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useClients, useProducts, useCreateInvoice } from "@/hooks/useData";
+import ProductRecommendations from "@/components/ProductRecommendations";
 
 interface LineItem {
   id: string;
@@ -247,15 +248,45 @@ const InvoiceGenerator: React.FC = () => {
           </div>
         </div>
 
-        {/* Notes */}
-        <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm">
-          <Label>Notes / Terms</Label>
-          <textarea
-            className="mt-1.5 w-full h-24 px-3 py-2 text-sm border border-input rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-            placeholder="Payment terms, special instructions, thank-you note…"
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-          />
+        {/* Summary & Suggestions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm">
+              <Label>Notes / Terms</Label>
+              <textarea
+                className="mt-1.5 w-full h-24 px-3 py-2 text-sm border border-input rounded-md bg-background resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Payment terms, special instructions, thank-you note…"
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="lg:col-span-1">
+            {items.some(i => i.productId) && (
+              <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm">
+                <ProductRecommendations
+                  productId={items.filter(i => i.productId).slice(-1)[0].productId}
+                  title="Customers also bought this"
+                  onAdd={(prod) => {
+                    const existingEmpty = items.findIndex(i => !i.productId);
+                    if (existingEmpty !== -1) {
+                      updateItem(items[existingEmpty].id, "productId", prod.id);
+                    } else {
+                      const newId = `row${Date.now()}`;
+                      setItems(prev => [...prev, {
+                        id: newId,
+                        productId: prod.id,
+                        productName: prod.name,
+                        quantity: 1,
+                        unitPrice: typeof prod.price === 'string' ? parseFloat(prod.price) : prod.price
+                      }]);
+                    }
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Actions */}

@@ -31,6 +31,74 @@ class ProductModel {
         const result = await pool.query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
         return result.rows[0];
     }
+
+    static async getRecommendations(productId, limit = 4) {
+        // Collaborative Filtering: "Customers who bought this also bought..."
+        const coPurchaseQuery = `
+            SELECT 
+                p.id, 
+                p.name, 
+                p.price, 
+                p.category,
+                p.stock,
+                p.status,
+                COUNT(ii2.product_id) as frequency
+            FROM invoice_items ii1
+            JOIN invoice_items ii2 ON ii1.invoice_id = ii2.invoice_id
+            JOIN products p ON ii2.product_id = p.id
+            WHERE ii1.product_id = $1 
+              AND ii2.product_id <> $1
+              AND p.status = 'active'
+            GROUP BY p.id, p.name, p.price, p.category, p.stock, p.status
+            ORDER BY frequency DESC
+            LIMIT $2
+        `;
+
+        try {
+            const coPurchaseResult = await pool.query(coPurchaseQuery, [productId, limit]);
+            let recommendations = coPurchaseResult.rows;
+
+            // Fallback: If not enough co-purchase data, fill with products from the same category
+            if (recommendations.length < limit) {
+                const product = await this.findById(productId);
+                if (product && product.category) {
+                    const remainingLimit = limit - recommendations.length;
+                    const excludedIds = [productId, ...recommendations.map(r => r.id)];
+
+                    const categoryQuery = `
+                        SELECT * FROM products 
+                        WHERE category = $1 
+                          AND id != ALL($2::uuid[])
+                          AND status = 'active'
+                        ORDER BY created_at DESC
+                        LIMIT $3
+                    `;
+                    const categoryResult = await pool.query(categoryQuery, [product.category, excludedIds, remainingLimit]);
+                    recommendations = [...recommendations, ...categoryResult.rows];
+                }
+            }
+
+            // Final Fallback: If still not enough, fill with latest products
+            if (recommendations.length < limit) {
+                const remainingLimit = limit - recommendations.length;
+                const excludedIds = [productId, ...recommendations.map(r => r.id)];
+                const generalQuery = `
+                    SELECT * FROM products 
+                    WHERE id != ALL($1::uuid[])
+                      AND status = 'active'
+                    ORDER BY created_at DESC
+                    LIMIT $2
+                 `;
+                const generalResult = await pool.query(generalQuery, [excludedIds, remainingLimit]);
+                recommendations = [...recommendations, ...generalResult.rows];
+            }
+
+            return recommendations;
+        } catch (error) {
+            console.error('Error in getRecommendations:', error);
+            return [];
+        }
+    }
 }
 
 module.exports = ProductModel;

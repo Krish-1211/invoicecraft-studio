@@ -51,3 +51,9 @@ CREATE TABLE IF NOT EXISTS invoice_items (
   quantity INTEGER NOT NULL DEFAULT 1,
   price DECIMAL(10, 2) NOT NULL
 );
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_invoice_items_product_id ON invoice_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON invoice_items(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);

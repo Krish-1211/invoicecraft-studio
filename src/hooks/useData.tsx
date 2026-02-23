@@ -48,6 +48,21 @@ export const useDeleteProduct = () => {
     });
 };
 
+export const useProductRecommendations = (productId: string | null, limit: number = 4) => {
+    return useQuery({
+        queryKey: ['product-recommendations', productId, limit],
+        queryFn: async () => {
+            if (!productId) return [];
+            const response = await api.get<any[]>(`/products/${productId}/recommendations?limit=${limit}`);
+            return response.data.map(p => ({
+                ...p,
+                price: typeof p.price === 'string' ? parseFloat(p.price) : p.price
+            }));
+        },
+        enabled: !!productId,
+    });
+};
+
 // Clients
 export const useClients = () => {
     return useQuery({

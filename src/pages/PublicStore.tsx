@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { getProductImage } from "@/lib/utils";
+import ProductRecommendations from "@/components/ProductRecommendations";
 
 interface CartItem {
     product: any;
@@ -146,7 +147,16 @@ const PublicStore: React.FC = () => {
                                                 </div>
                                             ))}
 
-                                            <div className="pt-2 border-t border-border mt-4">
+                                            {/* Recommendations Section */}
+                                            {cart.length > 0 && (
+                                                <ProductRecommendations
+                                                    productId={cart[cart.length - 1].product.id}
+                                                    onAdd={addToCart}
+                                                    title="Frequently bought together"
+                                                />
+                                            )}
+
+                                            <div className="pt-2 border-t border-border mt-6">
                                                 <h3 className="text-sm font-bold mb-3">Your Details</h3>
                                                 <div className="space-y-3">
                                                     <div>

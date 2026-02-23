@@ -51,9 +51,22 @@ const deleteProduct = async (req, res) => {
     }
 };
 
+const getRecommendations = async (req, res) => {
+    const { id } = req.params;
+    const { limit } = req.query;
+
+    try {
+        const recommendations = await ProductModel.getRecommendations(id, parseInt(limit) || 4);
+        res.json(recommendations);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getProducts,
     createProduct,
     updateProduct,
     deleteProduct,
+    getRecommendations,
 };

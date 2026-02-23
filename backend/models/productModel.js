@@ -76,13 +76,15 @@ class ProductModel {
                         const remainingLimit = limit - recommendations.length;
                         const excludedIds = getExcludedIds(recommendations);
 
-                        // For cross-sells, we are more lenient with status to ensure a match
+                        // Strictly filter for items that are in stock
                         const keywordQuery = `
                             SELECT * FROM products 
                             WHERE name ILIKE $1 
                               AND id != ALL($2::uuid[])
                               AND status NOT ILIKE 'deleted'
-                            ORDER BY (CASE WHEN status ILIKE 'out_of_stock' THEN 1 ELSE 0 END) ASC, created_at DESC
+                              AND status NOT ILIKE 'out_of_stock'
+                              AND stock > 0
+                            ORDER BY created_at DESC
                             LIMIT $3
                         `;
                         const keywordResult = await pool.query(keywordQuery, [`%${searchKeyword}%`, excludedIds, remainingLimit]);
@@ -105,6 +107,8 @@ class ProductModel {
                         WHERE category = $1 
                           AND id != ALL($2::uuid[])
                           AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock' OR status ILIKE 'low_stock')
+                          AND status NOT ILIKE 'out_of_stock'
+                          AND stock > 0
                         ORDER BY created_at DESC
                         LIMIT $3
                     `;
@@ -121,6 +125,8 @@ class ProductModel {
                     SELECT * FROM products 
                     WHERE id != ALL($1::uuid[])
                       AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock' OR status ILIKE 'low_stock')
+                      AND status NOT ILIKE 'out_of_stock'
+                      AND stock > 0
                     ORDER BY created_at DESC
                     LIMIT $2
                  `;

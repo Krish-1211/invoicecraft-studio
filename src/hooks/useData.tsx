@@ -169,6 +169,18 @@ export const useDeleteInvoice = () => {
     });
 };
 
+export const useUpdateInvoice = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, ...data }: any) => api.put(`/invoices/${id}`, data),
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['invoice', variables.id] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+        }
+    });
+};
+
 export const fetchInvoiceById = async (id: string) => {
     const response = await api.get(`/invoices/${id}`);
     return response.data;

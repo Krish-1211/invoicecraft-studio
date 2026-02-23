@@ -6,6 +6,7 @@ const {
     createPublicOrder,
     getInvoiceById,
     deleteInvoice,
+    updateInvoice,
 } = require('../controllers/invoiceController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
@@ -17,6 +18,7 @@ router.post('/public', createPublicOrder);
 
 router.route('/:id')
     .get(protect, getInvoiceById)
+    .put(protect, admin, updateInvoice)
     .delete(protect, admin, deleteInvoice);
 
 module.exports = router;

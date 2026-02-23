@@ -1,12 +1,13 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Plus, Trash2, ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useClients, useProducts, useCreateInvoice } from "@/hooks/useData";
+import { useClients, useProducts, useCreateInvoice, useInvoice, useUpdateInvoice } from "@/hooks/useData";
 import ProductRecommendations from "@/components/ProductRecommendations";
+import { toast } from "sonner";
 
 interface LineItem {
   id: string;
@@ -37,20 +38,54 @@ const emptyTax = (): TaxItem => ({
 });
 
 const InvoiceGenerator: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const isEdit = !!id;
   const navigate = useNavigate();
   const { data: clientsData } = useClients();
   const { data: productsData } = useProducts();
+  const { data: invoiceData, isLoading: isLoadingInvoice } = useInvoice(id || null);
   const createInvoice = useCreateInvoice();
+  const updateInvoice = useUpdateInvoice();
 
   const clients = clientsData || [];
   const products = productsData || [];
 
   const [selectedClient, setSelectedClient] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10)); // Used for display/logic? Backend creates `created_at`. I might want to pass it.
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().slice(0, 10));
   const [dueDate, setDueDate] = useState("");
   const [items, setItems] = useState<LineItem[]>([emptyItem()]);
   const [notes, setNotes] = useState("");
   const [taxes, setTaxes] = useState<TaxItem[]>([]);
+
+  useEffect(() => {
+    if (isEdit && invoiceData) {
+      setSelectedClient(invoiceData.client_id || "");
+      setInvoiceNumber(invoiceData.invoice_number || "");
+      if (invoiceData.created_at) setInvoiceDate(new Date(invoiceData.created_at).toISOString().slice(0, 10));
+      if (invoiceData.due_date) setDueDate(new Date(invoiceData.due_date).toISOString().slice(0, 10));
+      setNotes(invoiceData.notes || "");
+
+      if (invoiceData.items && invoiceData.items.length > 0) {
+        setItems(invoiceData.items.map((it: any) => ({
+          id: it.id,
+          productId: it.product_id,
+          productName: it.product_name,
+          quantity: it.quantity,
+          unitPrice: parseFloat(it.price)
+        })));
+      }
+
+      if (invoiceData.taxes) {
+        const parsedTaxes = typeof invoiceData.taxes === 'string' ? JSON.parse(invoiceData.taxes) : invoiceData.taxes;
+        setTaxes(parsedTaxes.map((t: any, idx: number) => ({
+          id: `tax-${idx}`,
+          name: t.name,
+          rate: t.rate
+        })));
+      }
+    }
+  }, [isEdit, invoiceData]);
 
   const updateItem = (id: string, field: keyof LineItem, value: string | number) => {
     setItems(prev => prev.map(item => {
@@ -72,35 +107,58 @@ const InvoiceGenerator: React.FC = () => {
     setTaxes(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
-  const handleCreate = (status: "draft" | "pending") => {
-    if (!selectedClient) return alert("Please select a client");
-    if (items.some(i => !i.productId)) return alert("Please select products for all items");
+  const handleSave = (status: "draft" | "pending" | "paid") => {
+    if (!selectedClient) return toast.error("Please select a client");
+    if (items.some(i => !i.productId)) return toast.error("Please select products for all items");
 
-    createInvoice.mutate({
+    const payload = {
       clientId: selectedClient,
-      invoiceNumber: `INV-${Date.now()}`, // Simple generation
-      dueDate: dueDate || null, // Optional
+      invoiceNumber: isEdit ? invoiceNumber : (invoiceNumber || `INV-${Date.now()}`),
+      dueDate: dueDate || null,
       status,
+      notes,
       taxes: taxes.map(t => ({ name: t.name, rate: t.rate })),
       items: items.map(i => ({ productId: i.productId, quantity: i.quantity, price: i.unitPrice }))
-    }, {
-      onSuccess: () => navigate("/invoices")
-    });
+    };
+
+    if (isEdit) {
+      updateInvoice.mutate({ id, ...payload }, {
+        onSuccess: () => {
+          toast.success("Invoice updated successfully");
+          navigate(`/invoices/${id}`);
+        }
+      });
+    } else {
+      createInvoice.mutate(payload, {
+        onSuccess: () => {
+          toast.success("Invoice created successfully");
+          navigate("/invoices");
+        }
+      });
+    }
   };
 
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
   const totalTaxAmount = taxes.reduce((sum, t) => sum + subtotal * (t.rate / 100), 0);
   const total = subtotal + totalTaxAmount;
 
+  if (isEdit && isLoadingInvoice) {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-8 animate-fade-in max-w-5xl">
       <div className="page-header flex items-center gap-3">
-        <button onClick={() => navigate("/invoices")} className="text-muted-foreground hover:text-foreground">
+        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1">
-          <h1 className="page-title">New Invoice</h1>
-          <p className="page-subtitle">Fill in the details to generate a new invoice.</p>
+          <h1 className="page-title">{isEdit ? "Edit Invoice" : "New Invoice"}</h1>
+          <p className="page-subtitle">{isEdit ? `Modifying ${invoiceNumber}` : "Fill in the details to generate a new invoice."}</p>
         </div>
       </div>
 
@@ -109,6 +167,15 @@ const InvoiceGenerator: React.FC = () => {
         <div className="bg-card border border-border rounded-lg p-4 sm:p-6 shadow-sm">
           <h2 className="text-sm font-semibold mb-4">Invoice Details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <Label>Invoice Number</Label>
+              <Input
+                className="mt-1.5"
+                placeholder="INV-001"
+                value={invoiceNumber}
+                onChange={e => setInvoiceNumber(e.target.value)}
+              />
+            </div>
             <div>
               <Label>Client</Label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -291,9 +358,13 @@ const InvoiceGenerator: React.FC = () => {
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-2 justify-end">
-          <Button variant="outline" onClick={() => navigate("/invoices")} className="w-full sm:w-auto order-3 sm:order-1">Cancel</Button>
-          <Button variant="outline" onClick={() => handleCreate("draft")} className="w-full sm:w-auto order-2 sm:order-2">Save as Draft</Button>
-          <Button onClick={() => handleCreate("pending")} className="w-full sm:w-auto order-1 sm:order-3">Generate Invoice</Button>
+          <Button variant="outline" onClick={() => navigate("/invoices")} className="w-full sm:w-auto order-4 sm:order-1">Cancel</Button>
+          <Button variant="outline" onClick={() => handleSave("draft")} className="w-full sm:w-auto order-3 sm:order-2">Save as Draft</Button>
+          <Button variant="outline" onClick={() => handleSave("paid")} className="w-full sm:w-auto order-2 sm:order-3">Save as Paid</Button>
+          <Button onClick={() => handleSave("pending")} className="w-full sm:w-auto order-1 sm:order-4 group">
+            <Save className="w-4 h-4 mr-2 hidden group-hover:block animate-in fade-in zoom-in duration-200" />
+            {isEdit ? "Update Invoice" : "Generate Invoice"}
+          </Button>
         </div>
       </div>
     </div>

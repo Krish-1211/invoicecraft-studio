@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Printer, Share2, Trash2, Mail, Building2, Calendar, CreditCard } from "lucide-react";
+import { ArrowLeft, Download, Printer, Share2, Trash2, Mail, Building2, Calendar, CreditCard, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import StatusBadge from "@/components/StatusBadge";
 import { useInvoice, useDeleteInvoice } from "@/hooks/useData";
@@ -75,6 +75,9 @@ const InvoiceDetails: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate(`/invoices/${id}/edit`)}>
+                        <Pencil className="w-4 h-4 mr-2" /> Edit
+                    </Button>
                     <Button variant="outline" size="sm" onClick={() => window.print()} className="hidden sm:flex">
                         <Printer className="w-4 h-4 mr-2" /> Print
                     </Button>

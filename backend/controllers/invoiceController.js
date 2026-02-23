@@ -101,6 +101,22 @@ const createPublicOrder = async (req, res) => {
     }
 };
 
+// @desc    Update invoice (Admin only)
+// @route   PUT /invoices/:id
+// @access  Private/Admin
+const updateInvoice = async (req, res) => {
+    const { invoiceNumber, clientId, items, status, dueDate, taxes } = req.body;
+
+    try {
+        const invoice = await InvoiceService.updateInvoice(req.params.id, {
+            invoiceNumber, clientId, items, status, dueDate, taxes
+        });
+        res.json(invoice);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 module.exports = {
     getInvoices,
     getMyInvoices,
@@ -108,4 +124,5 @@ module.exports = {
     createPublicOrder,
     getInvoiceById,
     deleteInvoice,
+    updateInvoice,
 };

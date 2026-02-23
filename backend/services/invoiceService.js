@@ -153,6 +153,90 @@ class InvoiceService {
         }
     }
 
+    static async updateInvoice(id, { clientId, items, invoiceNumber, status, dueDate, taxes }) {
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Fetch old items for stock reconciliation
+            const oldItemsRes = await client.query('SELECT * FROM invoice_items WHERE invoice_id = $1', [id]);
+            const oldInvoiceRes = await client.query('SELECT status FROM invoices WHERE id = $1', [id]);
+            const oldInvoice = oldInvoiceRes.rows[0];
+
+            if (!oldInvoice) throw new Error('Invoice not found');
+
+            // 2. Reverse stock impact of old items (only if old status was NOT draft)
+            if (oldInvoice.status !== 'draft' && oldInvoice.status !== 'Draft') {
+                for (const item of oldItemsRes.rows) {
+                    await client.query(
+                        'UPDATE products SET stock = stock + $1 WHERE id = $2',
+                        [item.quantity, item.product_id]
+                    );
+                }
+            }
+
+            // 3. Delete old items
+            await client.query('DELETE FROM invoice_items WHERE invoice_id = $1', [id]);
+
+            // 4. Calculate new totals
+            let subtotal = 0;
+            const processedItems = items.map(item => {
+                const itemTotal = (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
+                subtotal += itemTotal;
+                return {
+                    productId: item.productId,
+                    quantity: parseInt(item.quantity) || 0,
+                    price: parseFloat(item.price) || 0
+                };
+            });
+
+            const validTaxes = Array.isArray(taxes) ? taxes : [];
+            let totalTaxAmount = 0;
+            validTaxes.forEach(t => {
+                const r = parseFloat(t.rate) || 0;
+                totalTaxAmount += subtotal * (r / 100);
+            });
+            const total_amount = subtotal + totalTaxAmount;
+            const taxesJson = JSON.stringify(validTaxes.map(t => ({ name: t.name || 'Tax', rate: parseFloat(t.rate) || 0 })));
+
+            // 5. Update Invoice
+            const updateQuery = `
+                UPDATE invoices 
+                SET client_id = $1, invoice_number = $2, total_amount = $3, status = $4, due_date = $5, taxes = $6, updated_at = NOW()
+                WHERE id = $7
+                RETURNING *
+            `;
+            const updateValues = [clientId, invoiceNumber, total_amount, status, dueDate || null, taxesJson, id];
+            const invoiceResult = await client.query(updateQuery, updateValues);
+            const invoice = invoiceResult.rows[0];
+
+            // 6. Insert new items & Apply stock impact (only if new status is NOT draft)
+            for (const item of processedItems) {
+                await client.query(
+                    'INSERT INTO invoice_items (invoice_id, product_id, quantity, price) VALUES ($1, $2, $3, $4)',
+                    [id, item.productId, item.quantity, item.price]
+                );
+
+                if (status !== 'draft' && status !== 'Draft') {
+                    await client.query(
+                        'UPDATE products SET stock = stock - $1 WHERE id = $2',
+                        [item.quantity, item.productId]
+                    );
+                }
+            }
+
+            await client.query('COMMIT');
+            return invoice;
+
+        } catch (err) {
+            await client.query('ROLLBACK');
+            throw err;
+        } finally {
+            client.release();
+        }
+    }
+
     static async getInvoiceById(id) {
         const invoice = await InvoiceModel.findById(id);
         if (!invoice) return null;

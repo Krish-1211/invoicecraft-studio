@@ -40,6 +40,7 @@ const App = () => {
               <Route path="/orders" element={<Orders />} />
               <Route path="/invoices" element={<InvoiceHistory />} />
               <Route path="/invoices/:id" element={<InvoiceDetails />} />
+              <Route path="/invoices/:id/edit" element={<InvoiceGenerator />} />
               <Route path="/invoices/new" element={<InvoiceGenerator />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/client-portal" element={<ClientPortal />} />

@@ -38,37 +38,55 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({ product
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-3">
-                    {recommendations.map((product) => (
-                        <Card key={product.id} className="overflow-hidden border-border/50 hover:border-primary/50 transition-colors bg-background">
-                            <div className="aspect-square bg-muted/30 overflow-hidden relative border-b border-border/50">
-                                <img
-                                    src={getProductImage(product)}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover transition-transform hover:scale-105"
-                                />
-                                <div className="absolute top-1 right-1">
-                                    <div className="bg-primary/10 text-primary text-[8px] font-bold px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-                                        Match
+                    {recommendations.map((product) => {
+                        const isOutOfStock = product.status?.toLowerCase().includes('out_of_stock') || product.stock === 0;
+
+                        return (
+                            <Card key={product.id} className={`overflow-hidden border-border/50 hover:border-primary/50 transition-all duration-300 bg-background ${isOutOfStock ? 'opacity-70' : 'hover:shadow-md'}`}>
+                                <div className="aspect-square bg-muted/30 overflow-hidden relative border-b border-border/50">
+                                    <img
+                                        src={getProductImage(product)}
+                                        alt={product.name}
+                                        className={`w-full h-full object-cover transition-transform duration-500 ${!isOutOfStock && 'hover:scale-110'}`}
+                                    />
+                                    {isOutOfStock ? (
+                                        <div className="absolute inset-0 bg-background/60 flex items-center justify-center backdrop-blur-[1px]">
+                                            <span className="text-[9px] font-bold uppercase tracking-tighter bg-muted text-muted-foreground px-2 py-1 rounded-sm border border-border">
+                                                Sold Out
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="absolute top-1 right-1">
+                                            <div className="bg-primary/90 text-primary-foreground text-[8px] font-black px-2 py-0.5 rounded-full shadow-lg flex items-center gap-1 backdrop-blur-md">
+                                                <Sparkles className="w-2 h-2" />
+                                                BEST MATCH
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <CardContent className="p-2 space-y-2">
+                                    <div>
+                                        <h4 className="text-[11px] font-semibold line-clamp-1 leading-tight text-foreground/90">{product.name}</h4>
+                                        <p className="text-xs font-bold text-primary">${product.price.toFixed(2)}</p>
                                     </div>
-                                </div>
-                            </div>
-                            <CardContent className="p-2 space-y-2">
-                                <div>
-                                    <h4 className="text-[11px] font-semibold line-clamp-1 leading-tight">{product.name}</h4>
-                                    <p className="text-xs font-bold text-primary">${product.price.toFixed(2)}</p>
-                                </div>
-                                <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    className="w-full h-7 text-[10px] gap-1 px-1 hover:bg-primary hover:text-primary-foreground transition-all"
-                                    onClick={() => onAdd(product)}
-                                >
-                                    <Plus className="w-3 h-3" />
-                                    Add Item
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
+                                    <Button
+                                        size="sm"
+                                        variant={isOutOfStock ? "outline" : "secondary"}
+                                        className={`w-full h-7 text-[10px] gap-1 px-1 transition-all ${!isOutOfStock && 'hover:bg-primary hover:text-primary-foreground'}`}
+                                        onClick={() => !isOutOfStock && onAdd(product)}
+                                        disabled={isOutOfStock}
+                                    >
+                                        {isOutOfStock ? 'Notify Me' : (
+                                            <>
+                                                <Plus className="w-3 h-3" />
+                                                Add Item
+                                            </>
+                                        )}
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
             )}
         </div>

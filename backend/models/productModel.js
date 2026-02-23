@@ -74,11 +74,13 @@ class ProductModel {
                         const remainingLimit = limit - recommendations.length;
                         const excludedIds = [productId, ...recommendations.map(r => r.id)];
 
+                        // For cross-sells, we are more lenient with status to ensure a match
                         const keywordQuery = `
                             SELECT * FROM products 
                             WHERE name ILIKE $1 
                               AND id != ALL($2::text[])
-                              AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock')
+                              AND status NOT ILIKE 'deleted'
+                            ORDER BY (CASE WHEN status ILIKE 'out_of_stock' THEN 1 ELSE 0 END) ASC, created_at DESC
                             LIMIT $3
                         `;
                         const keywordResult = await pool.query(keywordQuery, [`%${searchKeyword}%`, excludedIds, remainingLimit]);
@@ -90,7 +92,7 @@ class ProductModel {
             // Fallback 1: Same Category
             if (recommendations.length < limit) {
                 const product = recommendations.length > 0 ? null : await this.findById(productId);
-                const category = product?.category; // Only fetch if we don't have it yet
+                const category = product?.category;
 
                 if (category || (recommendations.length === 0 && product?.category)) {
                     const targetCategory = category || (await this.findById(productId))?.category;
@@ -102,7 +104,7 @@ class ProductModel {
                             SELECT * FROM products 
                             WHERE category = $1 
                               AND id != ALL($2::text[])
-                              AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock')
+                              AND (status ILIKE 'active' OR status ILIKE 'In Stock' OR status ILIKE 'in_stock' OR status ILIKE 'low_stock')
                             ORDER BY created_at DESC
                             LIMIT $3
                         `;
